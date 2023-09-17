@@ -1,0 +1,18 @@
+services:
+  nodejs:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - database
+  database:
+    image: mysql:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=db
+    volumes:
+      - ./mysql:/var/lib/mysql
