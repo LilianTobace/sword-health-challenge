@@ -4,7 +4,6 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const routes = require('./app/routes');
 const passport = require('./app/utils/authentication');
-const database = require('./app/utils/database');
 
 module.exports.handler = async () => {
   try {
@@ -16,7 +15,6 @@ module.exports.handler = async () => {
       // saveUninitialized: false,
     }));
     app.use(passport.initialize());
-    await database.handler();
 
     const router = express.Router();
     app.use('/', router);

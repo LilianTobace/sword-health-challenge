@@ -1,5 +1,5 @@
-const model = require('../models/taskModel');
-const { roles } = require('../models/userModel');
+const db = require('../../models/index');
+const { roles } = require('../../models/user');
 // const messaging = require('../utils/messaging');
 
 const checkPermissions = (user, userId) => {
@@ -23,8 +23,8 @@ module.exports = {
         return res.status(400).json({ message: '"summary", "datePerformed", "userId" fields are missing!' });
       }
 
-      const newTask = await model.create({
-        userId: req.user.id,
+      const newTask = await db.Tasks.create({
+        userId,
         summary,
         datePerformed: new Date(datePerformed),
       });
@@ -51,7 +51,7 @@ module.exports = {
       const permission = checkPermissions(req.user, userId);
       if (permission) return res.status(403).json(permission);
 
-      const task = await model.findOne({ where: { id: userId } });
+      const task = await db.Tasks.findOne({ where: { id: userId } });
       if (task) return res.status(200).json(task);
 
       return res.status(404).json({ error: 'Task not found!' });
@@ -72,7 +72,7 @@ module.exports = {
         return res.json({ message: '"summary", "datePerformed", "userId" fields are missing!' });
       }
 
-      const updated = await model.update({
+      const updated = await db.Tasks.update({
         summary, datePerformed: new Date(datePerformed), userId,
       }, { where: { id } });
       if (updated && updated > 0) return res.status(201).json('Task updated successfully!');
@@ -86,9 +86,9 @@ module.exports = {
     try {
       let tasks;
       if (req.user.role === roles.Technician) {
-        tasks = await model.findAll({ where: { userId: req.user.id } });
+        tasks = await db.Tasks.findAll({ where: { userId: req.user.id } });
       } else {
-        tasks = await model.findAll();
+        tasks = await db.Tasks.findAll();
       }
       res.status(201).json(tasks);
     } catch (error) {
@@ -104,7 +104,7 @@ module.exports = {
         return res.status(403).json('Permission denied!');
       }
 
-      const deleted = await model.destroy({ where: { id } });
+      const deleted = await db.Tasks.destroy({ where: { id } });
       if (deleted && deleted > 0) return res.status(201).json('User deleted successfully!');
       return res.status(404).json('Task not found');
     } catch (error) {
