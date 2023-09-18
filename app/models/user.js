@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 const { Model } = require('sequelize');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');

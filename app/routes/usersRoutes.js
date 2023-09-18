@@ -1,6 +1,6 @@
 const express = require('express');
 const userController = require('../controllers/userController');
-const { roles } = require('../models/userModel');
+const { roles } = require('../models/user');
 
 const router = express.Router();
 

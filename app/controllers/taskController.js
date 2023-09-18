@@ -1,6 +1,5 @@
-const db = require('../../models/index');
-const { roles } = require('../../models/user');
-// const messaging = require('../utils/messaging');
+const db = require('../models/index');
+const { roles } = require('../models/user');
 
 const checkPermissions = (user, userId) => {
   if (user.role === roles.Technician) {
@@ -29,16 +28,6 @@ module.exports = {
         datePerformed: new Date(datePerformed),
       });
       return res.status(201).json(newTask);
-
-      // if (isTechnicianWithPermission) {
-      //   const message = `User userId #${userId} created task id #${newTask.id}`;
-      //   const { channel } = await messaging.connect();
-      //   console.info(message);
-      //   messaging.publish(channel, 'target-queue', message);
-      // }
-      // } else {
-      //   res.status(403).json({ error: 'Forbidden' });
-      // }
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }

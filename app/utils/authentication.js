@@ -2,7 +2,7 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const JwtStrategy = require('passport-jwt').Strategy;
 const { ExtractJwt } = require('passport-jwt');
-const db = require('../../models/index');
+const db = require('../models/index');
 
 passport.use(new LocalStrategy(
   async (username, password, done) => {
