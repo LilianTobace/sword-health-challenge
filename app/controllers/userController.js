@@ -59,7 +59,7 @@ module.exports = {
 
       if (!name) return res.json({ message: '"name" field is missing!' });
       const updated = await db.Users.update({ name }, { where: { username } });
-      if (updated && updated > 0) return res.status(201).json('Use updated!');
+      if (updated && updated > 0) return res.status(201).json('User updated!');
       return res.status(404).json('User not found!');
     } catch (error) {
       return res.status(500).json({ message: error.message });

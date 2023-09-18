@@ -40,7 +40,7 @@ module.exports = {
       const permission = checkPermissions(req.user, userId);
       if (permission) return res.status(403).json(permission);
 
-      const task = await db.Tasks.findOne({ where: { id: userId } });
+      const task = await db.Tasks.findAll({ where: { userId } });
       if (task) return res.status(200).json(task);
 
       return res.status(404).json({ error: 'Task not found!' });
