@@ -4,7 +4,7 @@ const { roles } = require('../models/user');
 const checkPermissions = (user, userId) => {
   if (user.role === roles.Technician) {
     if (String(user.id) !== String(userId)) {
-      return 'Permission denied: userid Incorrect!';
+      return 'Permission denied: userId Incorrect!';
     }
   }
   return null;
@@ -14,7 +14,7 @@ const sendNotification = (task, username) => {
   // Notification didn't block any request
   setTimeout(() => {
     console.log(`The tech ${username} performed the task ${task.id} on date ${task.datePerformed}`);
-  }, 15000);
+  }, 10000);
 };
 
 module.exports = {
@@ -29,16 +29,17 @@ module.exports = {
         return res.status(400).json({ message: '"summary", "datePerformed", "userId" fields are missing!' });
       }
 
-      const newTask = await db.Tasks.create({
+      const created = await db.Tasks.create({
         userId,
         summary,
         datePerformed: new Date(datePerformed),
       });
 
-      console.log('before notification sent');
-      if (req.user.role === roles.Technician) await sendNotification(newTask, req.user.username);
-      console.log('after notification sent');
-      return res.status(201).json(newTask);
+      if (req.user.role === roles.Technician) {
+        await sendNotification(created, req.user.username);
+        console.log('Notification is being sent to the manager...');
+      }
+      return res.status(201).json(created);
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -75,7 +76,14 @@ module.exports = {
       const updated = await db.Tasks.update({
         summary, datePerformed: new Date(datePerformed), userId,
       }, { where: { id } });
-      if (updated && updated > 0) return res.status(201).json('Task updated successfully!');
+
+      if (updated && updated > 0) {
+        if (req.user.role === roles.Technician) {
+          await sendNotification({ id, datePerformed }, req.user.username);
+          console.log('Notification is being sent to the manager...');
+        }
+        return res.status(201).json('Task updated successfully!');
+      }
       return res.status(404).json({ error: 'Task not found!' });
     } catch (error) {
       return res.status(500).json({ message: error.message });

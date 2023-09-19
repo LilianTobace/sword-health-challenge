@@ -9,9 +9,7 @@ router.use((req, res, next) => {
   return next();
 });
 
-router.post('/create', userController.create);
-
-router.put('/update/:username', userController.update);
+router.put('/:username', userController.update);
 
 router.get('/list', userController.list);
 

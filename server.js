@@ -11,8 +11,6 @@ module.exports.handler = async () => {
     app.use(bodyParser.json());
     app.use(session({
       secret: process.env.SESSION_CLIENT_SECRET,
-      // resave: false,
-      // saveUninitialized: false,
     }));
     app.use(passport.initialize());
 

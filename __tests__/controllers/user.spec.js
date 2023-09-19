@@ -1,4 +1,4 @@
-const { mockRequest, mockResponse, mockedModel } = require('./__mocks__/model.mock');
+const { mockRequest, mockResponse, mockedModel } = require('./__mocks__/mocks');
 const userController = require('../../app/controllers/user');
 const mocked = require('./__stubs__/user.input.json');
 const db = require('../../app/models/index');
@@ -7,7 +7,7 @@ jest.mock('../../app/models/index', () => ({ Users: mockedModel }));
 
 let req; let res;
 
-describe('userController', () => {
+describe('User Controller', () => {
   beforeEach(() => { req = mockRequest(); res = mockResponse(); });
   afterEach(() => { jest.clearAllMocks(); });
 

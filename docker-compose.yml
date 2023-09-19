@@ -24,15 +24,3 @@ services:
       test: "mysql -uroot -p$$MYSQL_ROOT_PASSWORD  -e 'SHOW databases'"
       interval: 10s
       retries: 3
-  # rabbitmq:
-  #   image: rabbitmq
-  #   healthcheck:
-  #       test: ["CMD", "curl", "-f", "http://localhost:5672"]
-  #       interval: 30s
-  #       timeout: 10s
-  #       retries: 5
-  #   ports:
-  #     - "0.0.0.0:5672:5672"
-  #     - "0.0.0.0:15672:15672"
-  #   networks:
-  #     - app-tier

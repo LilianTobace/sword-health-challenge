@@ -4,7 +4,9 @@ module.exports = {
   login: async (req, res) => {
     try {
       const { username, password } = req.body;
+
       const verifyCredentials = await db.Users.validCredentials(username, password);
+
       if (verifyCredentials) {
         const token = db.Users.generateToken(verifyCredentials);
         res.status(200).json(`Welcome ${verifyCredentials.name}! Token: bearer ${token}`);
@@ -24,10 +26,11 @@ module.exports = {
 
       const checkUsername = await db.Users.findOne({ where: { username } });
       if (checkUsername) return res.status(401).json('This username is already exists!');
-      const newUser = await db.Users.create({
+
+      const created = await db.Users.create({
         role, name, username, password,
       });
-      return res.status(201).json(newUser);
+      return res.status(201).json(created);
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -58,6 +61,7 @@ module.exports = {
       const { name } = req.body;
 
       if (!name) return res.json({ message: '"name" field is missing!' });
+
       const updated = await db.Users.update({ name }, { where: { username } });
       if (updated && updated > 0) return res.status(201).json('User updated!');
       return res.status(404).json('User not found!');
@@ -69,6 +73,7 @@ module.exports = {
   delete: async (req, res) => {
     try {
       const { username } = req.params;
+
       const deleted = await db.Users.destroy({ where: { username } });
       if (deleted && deleted > 0) return res.status(201).json('User deleted!');
       return res.status(404).json('User not found!');
