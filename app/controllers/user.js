@@ -1,4 +1,5 @@
 const db = require('../models/index');
+const { hashPassword } = require('../models/user');
 
 module.exports = {
   login: async (req, res) => {
@@ -9,7 +10,7 @@ module.exports = {
 
       if (verifyCredentials) {
         const token = db.Users.generateToken(verifyCredentials);
-        res.status(200).json(`Welcome ${verifyCredentials.name}! Token: bearer ${token}`);
+        res.status(200).json(`Welcome ${verifyCredentials.name}! Token: Bearer ${token}`);
       } else {
         res.status(401).json('The username or password are invalid!');
       }
@@ -58,11 +59,28 @@ module.exports = {
   update: async (req, res) => {
     try {
       const { username } = req.params;
-      const { name } = req.body;
+      const {
+        name, role, password, username: newUsername,
+      } = req.body;
 
-      if (!name) return res.json({ message: '"name" field is missing!' });
+      if (!name && !role && !password && !newUsername) {
+        return res.json({
+          message: '"name", "role", "password", "username" fields are missing!',
+        });
+      }
 
-      const updated = await db.Users.update({ name }, { where: { username } });
+      if (newUsername) {
+        const checkUsername = await db.Users.findOne({ where: { username: newUsername } });
+        if (checkUsername) return res.status(401).json('This username is already exists!');
+      }
+
+      let newPassword;
+      if (password) newPassword = await hashPassword(password);
+
+      const updated = await db.Users.update({
+        name, role, password: newPassword, username: newUsername,
+      }, { where: { username } });
+
       if (updated && updated > 0) return res.status(201).json('User updated!');
       return res.status(404).json('User not found!');
     } catch (error) {
@@ -74,9 +92,11 @@ module.exports = {
     try {
       const { username } = req.params;
 
-      const deleted = await db.Users.destroy({ where: { username } });
-      if (deleted && deleted > 0) return res.status(201).json('User deleted!');
-      return res.status(404).json('User not found!');
+      const checkUsername = await db.Users.findOne({ where: { username } });
+      if (!checkUsername) return res.status(404).json('Username not found!');
+
+      await db.Users.destroy({ where: { username } });
+      return res.status(201).json('User deleted!');
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }

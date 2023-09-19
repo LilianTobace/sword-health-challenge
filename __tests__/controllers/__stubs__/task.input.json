@@ -2,11 +2,13 @@
   "user": [
     {
       "id": 1,
-      "role": "manager"
+      "role": "manager",
+      "username": "manager"
     },
     {
       "id": 2,
-      "role": "technician"
+      "role": "technician",
+      "username": "technician"
     }
   ],
   "create": [

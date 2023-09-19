@@ -1,20 +1,14 @@
 const db = require('../models/index');
 const { roles } = require('../models/user');
+const notification = require('./notification');
 
 const checkPermissions = (user, userId) => {
   if (user.role === roles.Technician) {
     if (String(user.id) !== String(userId)) {
-      return 'Permission denied: userId Incorrect!';
+      return 'Permission denied!';
     }
   }
   return null;
-};
-
-const sendNotification = (task, username) => {
-  // Notification didn't block any request
-  setTimeout(() => {
-    console.log(`The tech ${username} performed the task ${task.id} on date ${task.datePerformed}`);
-  }, 10000);
 };
 
 module.exports = {
@@ -29,6 +23,9 @@ module.exports = {
         return res.status(400).json({ message: '"summary", "datePerformed", "userId" fields are missing!' });
       }
 
+      const checkUserId = await db.Users.findOne({ where: { id: userId } });
+      if (!checkUserId) return res.status(404).json('UserId not found!');
+
       const created = await db.Tasks.create({
         userId,
         summary,
@@ -36,7 +33,7 @@ module.exports = {
       });
 
       if (req.user.role === roles.Technician) {
-        await sendNotification(created, req.user.username);
+        await notification.sendNotification(created, req.user.username);
         console.log('Notification is being sent to the manager...');
       }
       return res.status(201).json(created);
@@ -67,19 +64,30 @@ module.exports = {
       const { summary, datePerformed, userId } = req.body;
 
       const permission = checkPermissions(req.user, userId);
+
       if (permission) return res.status(403).json(permission);
 
-      if (!summary || !datePerformed || !userId) {
+      if (!summary && !datePerformed && !userId) {
         return res.json({ message: '"summary", "datePerformed", "userId" fields are missing!' });
       }
 
+      if (userId) {
+        const checkUserId = await db.Users.findOne({ where: { id: userId } });
+        if (!checkUserId) return res.status(401).json('This userId is incorrect!');
+      }
+
+      let newDatePerformed;
+      if (datePerformed) {
+        newDatePerformed = new Date(datePerformed);
+      }
+
       const updated = await db.Tasks.update({
-        summary, datePerformed: new Date(datePerformed), userId,
+        summary, datePerformed: newDatePerformed, userId,
       }, { where: { id } });
 
       if (updated && updated > 0) {
         if (req.user.role === roles.Technician) {
-          await sendNotification({ id, datePerformed }, req.user.username);
+          await notification.sendNotification({ id, datePerformed }, req.user.username);
           console.log('Notification is being sent to the manager...');
         }
         return res.status(201).json('Task updated successfully!');

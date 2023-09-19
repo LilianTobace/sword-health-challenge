@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { mockRequest, mockResponse, mockedModel } = require('./__mocks__/mocks');
 const userController = require('../../app/controllers/user');
 const mocked = require('./__stubs__/user.input.json');
@@ -23,7 +25,7 @@ describe('User Controller', () => {
       expect(db.Users.generateToken).toHaveBeenCalledTimes(1);
       expect(db.Users.validCredentials).toHaveBeenCalledWith(mocked.login[0].username, mocked.login[0].password);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(`Welcome ${mocked.login[0].username}! Token: bearer 123`);
+      expect(res.json).toHaveBeenCalledWith(`Welcome ${mocked.login[0].username}! Token: Bearer 123`);
     });
 
     it('should access the system as technician', async () => {
@@ -37,7 +39,7 @@ describe('User Controller', () => {
       expect(db.Users.generateToken).toHaveBeenCalledTimes(1);
       expect(db.Users.validCredentials).toHaveBeenCalledWith(mocked.login[1].username, mocked.login[1].password);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(`Welcome ${mocked.login[1].username}! Token: bearer 123`);
+      expect(res.json).toHaveBeenCalledWith(`Welcome ${mocked.login[1].username}! Token: Bearer 123`);
     });
 
     it('should not access with a invalid username or password', async () => {
@@ -166,38 +168,68 @@ describe('User Controller', () => {
 
   describe('update', () => {
     it('should update the user', async () => {
-      expect.assertions(4);
+      expect.assertions(5);
 
       req.params = mocked.create[0];
       req.body = mocked.create[0];
+      db.Users.findOne.mockResolvedValue(false);
+      jest.spyOn(bcrypt, 'hashSync').mockReturnValue(mocked.create[0].password);
       db.Users.update.mockResolvedValue([1]);
       await userController.update(req, res);
 
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
+      expect(bcrypt.hashSync).toHaveBeenCalledTimes(1);
       expect(db.Users.update).toHaveBeenCalledTimes(1);
-      expect(db.Users.update)
-        .toHaveBeenCalledWith({ name: mocked.create[0].name }, { where: { username: mocked.create[0].username } });
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith('User updated!');
     });
 
-    it('should not update an invalid user', async () => {
+    it('should not update with username is already exists', async () => {
       expect.assertions(3);
 
       req.params = mocked.create[0];
       req.body = mocked.create[0];
-      db.Users.update.mockResolvedValue();
+      db.Users.findOne.mockResolvedValue(true);
       await userController.update(req, res);
 
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith('This username is already exists!');
+    });
+
+    it('should not update with the old username is invalid', async () => {
+      expect.assertions(5);
+
+      req.params = mocked.create[0];
+      req.body = mocked.create[0];
+      db.Users.findOne.mockResolvedValue(false);
+      jest.spyOn(bcrypt, 'hashSync').mockReturnValue(mocked.create[0].password);
+      db.Users.update.mockResolvedValue([]);
+      await userController.update(req, res);
+
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
+      expect(bcrypt.hashSync).toHaveBeenCalledTimes(1);
       expect(db.Users.update).toHaveBeenCalledTimes(1);
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith('User not found!');
+    });
+
+    it('should not update without required fields', async () => {
+      expect.assertions(1);
+
+      req.params = mocked.create[0];
+      req.body = {};
+      await userController.update(req, res);
+
+      expect(res.json)
+        .toHaveBeenCalledWith({ message: '"name", "role", "password", "username" fields are missing!' });
     });
 
     it('should handle errors', async () => {
       expect.assertions(2);
       req.params = mocked.create[0];
       req.body = mocked.create[0];
-      db.Users.update.mockRejectedValue(new Error('error'));
+      db.Users.findOne.mockRejectedValue(new Error('error'));
       await userController.update(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
@@ -206,37 +238,38 @@ describe('User Controller', () => {
   });
 
   describe('delete', () => {
-    it('should delete the users', async () => {
-      expect.assertions(4);
+    it('should delete the user', async () => {
+      expect.assertions(5);
 
       req.params = mocked.create[0];
+      db.Users.findOne.mockResolvedValue(true);
       db.Users.destroy.mockResolvedValue([1]);
       await userController.delete(req, res);
 
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
       expect(db.Users.destroy).toHaveBeenCalledTimes(1);
       expect(db.Users.destroy).toHaveBeenCalledWith({ where: { username: mocked.create[0].username } });
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith('User deleted!');
     });
 
-    it('should not delete an invalid users', async () => {
-      expect.assertions(4);
+    it('should not delete the user if pass an invalid username', async () => {
+      expect.assertions(3);
 
       req.params = mocked.create[0];
-      db.Users.destroy.mockResolvedValue();
+      db.Users.findOne.mockResolvedValue(false);
       await userController.delete(req, res);
 
-      expect(db.Users.destroy).toHaveBeenCalledTimes(1);
-      expect(db.Users.destroy).toHaveBeenCalledWith({ where: { username: mocked.create[0].username } });
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith('User not found!');
+      expect(res.json).toHaveBeenCalledWith('Username not found!');
     });
 
     it('should handle errors', async () => {
       expect.assertions(2);
 
       req.params = mocked.create[0];
-      db.Users.destroy.mockRejectedValue(new Error('error'));
+      db.Users.findOne.mockRejectedValue(new Error('error'));
       await userController.delete(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);

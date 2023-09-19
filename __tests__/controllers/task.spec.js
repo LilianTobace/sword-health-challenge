@@ -1,9 +1,10 @@
 const { mockRequest, mockResponse, mockedModel } = require('./__mocks__/mocks');
 const taskController = require('../../app/controllers/task');
+const notificationController = require('../../app/controllers/notification');
 const mocked = require('./__stubs__/task.input.json');
 const db = require('../../app/models/index');
 
-jest.mock('../../app/models/index', () => ({ Tasks: mockedModel }));
+jest.mock('../../app/models/index', () => ({ Tasks: mockedModel, Users: mockedModel }));
 
 describe('Task Controller', () => {
   let req; let res;
@@ -12,16 +13,18 @@ describe('Task Controller', () => {
 
   describe('create', () => {
     it('should create a new task as manager permission', async () => {
-      expect.assertions(4);
+      expect.assertions(5);
 
       req.user = mocked.user[0];
       req.body = mocked.create[0];
+      db.Users.findOne.mockResolvedValue(true);
       db.Tasks.create.mockResolvedValue(mocked.create[0]);
       await taskController.create(req, res);
 
       const input = mocked.create[0];
       input.datePerformed = new Date(mocked.create[0].datePerformed);
 
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
       expect(db.Tasks.create).toHaveBeenCalledTimes(1);
       expect(db.Tasks.create).toHaveBeenCalledWith(input);
       expect(res.status).toHaveBeenCalledWith(201);
@@ -39,22 +42,42 @@ describe('Task Controller', () => {
       input.datePerformed = new Date(mocked.create[0].datePerformed);
 
       expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith('Permission denied: userid Incorrect!');
+      expect(res.json).toHaveBeenCalledWith('Permission denied!');
+    });
+
+    it('should not create a task with an invalid userId', async () => {
+      expect.assertions(3);
+
+      req.user = mocked.user[0];
+      req.body = mocked.create[0];
+      db.Users.findOne.mockResolvedValue(false);
+      await taskController.create(req, res);
+
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith('UserId not found!');
     });
 
     it('should create a new task as technician permission', async () => {
-      expect.assertions(4);
+      expect.assertions(6);
 
       req.user = mocked.user[1];
       req.body = mocked.create[1];
+      db.Users.findOne.mockResolvedValue(true);
       db.Tasks.create.mockResolvedValue(mocked.create[1]);
+      jest.spyOn(notificationController, 'sendNotification').mockResolvedValue(true);
+
       await taskController.create(req, res);
 
       const input = mocked.create[1];
       input.datePerformed = new Date(mocked.create[1].datePerformed);
 
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
       expect(db.Tasks.create).toHaveBeenCalledTimes(1);
       expect(db.Tasks.create).toHaveBeenCalledWith(input);
+      expect(
+        notificationController.sendNotification(mocked.create[1], mocked.user[1].username),
+      ).resolves.toEqual(true);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(mocked.create[1]);
     });
@@ -175,30 +198,54 @@ describe('Task Controller', () => {
   });
 
   describe('update', () => {
-    it('should update the task as manager permission', async () => {
-      expect.assertions(3);
+    it('should not update the task with invalid id', async () => {
+      expect.assertions(4);
 
       req.user = mocked.user[0];
       req.params = mocked.user[0];
       req.body = mocked.create[0];
+      db.Users.findOne.mockResolvedValue(true);
+      db.Tasks.update.mockResolvedValue([]);
+      await taskController.update(req, res);
+
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
+      expect(db.Tasks.update).toHaveBeenCalledTimes(1);
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Task not found!' });
+    });
+
+    it('should update the task as manager permission', async () => {
+      expect.assertions(4);
+
+      req.user = mocked.user[0];
+      req.params = mocked.user[0];
+      req.body = mocked.create[0];
+      db.Users.findOne.mockResolvedValue(true);
       db.Tasks.update.mockResolvedValue([1]);
       await taskController.update(req, res);
 
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
       expect(db.Tasks.update).toHaveBeenCalledTimes(1);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith('Task updated successfully!');
     });
 
     it('should update the task as technician permission', async () => {
-      expect.assertions(3);
+      expect.assertions(5);
 
       req.user = mocked.user[1];
       req.params = mocked.user[1];
       req.body = mocked.create[1];
+      db.Users.findOne.mockResolvedValue(true);
       db.Tasks.update.mockResolvedValue([1]);
+      jest.spyOn(notificationController, 'sendNotification').mockResolvedValue(true);
       await taskController.update(req, res);
 
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
       expect(db.Tasks.update).toHaveBeenCalledTimes(1);
+      expect(
+        notificationController.sendNotification(mocked.create[1], mocked.user[1].username),
+      ).resolves.toEqual(true);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith('Task updated successfully!');
     });
@@ -212,7 +259,7 @@ describe('Task Controller', () => {
       await taskController.update(req, res);
 
       expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith('Permission denied: userid Incorrect!');
+      expect(res.json).toHaveBeenCalledWith('Permission denied!');
     });
 
     it('should not update a task without requireds fields', async () => {
@@ -226,18 +273,18 @@ describe('Task Controller', () => {
       expect(res.json).toHaveBeenCalledWith({ message: '"summary", "datePerformed", "userId" fields are missing!' });
     });
 
-    it('should not update an invalid task', async () => {
+    it('should not update a task with invalid userId', async () => {
       expect.assertions(3);
 
       req.user = mocked.user[0];
       req.params = mocked.user[0];
       req.body = mocked.create[0];
-      db.Tasks.update.mockResolvedValue();
+      db.Users.findOne.mockResolvedValue();
       await taskController.update(req, res);
 
-      expect(db.Tasks.update).toHaveBeenCalledTimes(1);
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Task not found!' });
+      expect(db.Users.findOne).toHaveBeenCalledTimes(1);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith('This userId is incorrect!');
     });
 
     it('should handle errors', async () => {
@@ -246,7 +293,7 @@ describe('Task Controller', () => {
       req.user = mocked.user[0];
       req.params = mocked.user[0];
       req.body = mocked.create[0];
-      db.Tasks.update.mockRejectedValue(new Error('error'));
+      db.Users.findOne.mockRejectedValue(new Error('error'));
       await taskController.update(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);

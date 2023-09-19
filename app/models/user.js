@@ -7,11 +7,10 @@ module.exports.roles = {
   Technician: 'technician',
 };
 
-const hashPassword = (value) => {
+module.exports.hashPassword = (value) => {
   try {
     const salt = bcrypt.genSaltSync(10);
     const hash = (bcrypt.hashSync(value, salt)).toString();
-    console.log({ hash });
     return hash;
   } catch (err) {
     throw new Error(err);
@@ -79,12 +78,12 @@ module.exports.User = (sequelize, DataTypes) => {
   }, {
     hooks: {
       beforeCreate: async (user) => {
-        const hash = hashPassword(user.password);
+        const hash = module.exports.hashPassword(user.password);
         user.password = hash;
       },
       beforeUpdate: async (user) => {
         if (user.changed('password')) {
-          const hash = hashPassword(user.password);
+          const hash = module.exports.hashPassword(user.password);
           user.password = hash;
         }
       },
