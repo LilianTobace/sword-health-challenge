@@ -1,0 +1,24 @@
+{
+  "user": [
+    {
+      "id": 1,
+      "role": "manager"
+    },
+    {
+      "id": 2,
+      "role": "technician"
+    }
+  ],
+  "create": [
+    {
+      "userId": 1,
+      "summary": "summary",
+      "datePerformed": "2023-01-01T00:00:00"
+    },
+    {
+      "userId": 2,
+      "summary": "summary",
+      "datePerformed": "2023-01-01T00:00:00"
+    }
+  ]
+}

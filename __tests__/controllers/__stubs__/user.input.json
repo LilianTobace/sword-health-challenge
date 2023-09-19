@@ -1,0 +1,26 @@
+{ 
+  "login": [
+    {
+      "username": "manager",
+      "password": "123456789"
+    },
+    {
+      "username": "technician",
+      "password": "123456789"
+    }
+  ],
+  "create": [
+    {
+      "name": "manager",
+      "username": "manager",
+      "role": "manager",
+      "password": "123456789"
+    },
+    {
+      "name": "technician",
+      "username": "technician",
+      "role": "technician",
+      "password": "123456789"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "testRegex": "((\\.|/*.)(spec))\\.js?$",
+  "verbose": true,
+  "roots": ["./__tests__/"],
+  "testPathIgnorePatterns": ["./node_modules/"],
+  "coveragePathIgnorePatterns": ["./app/models/user.js"],
+  "collectCoverage": true,
+  "coverageThreshold": {
+    "global": {
+      "branches": 90,
+      "functions": 90,
+      "lines": 90,
+      "statements": 90
+    }
+  }
+}
+
