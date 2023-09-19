@@ -39,21 +39,24 @@ It'll build the project, install all dependencies and configure the database.
 ## The application exposes the following routes:
 
 Public routes
-
+```shell
 GET /register - Create a new user
 GET /login    - Access the system
+```
 
 Users
-
+```shell
 GET /users/list           - Returns a list of all users
 GET /users/list/:username - List the user by username
 PUT /:username            - Updates an existing user
 DELETE /:username         - Deletes an existing user
+```
 
 Task
-
+```shell
 POST /tasks/create      - Create a new task
 GET /tasks/list         - Returns a list of all tasks
 GET /users/list/:userId - List tasks by userId
 PUT /tasks/:id          - Updates an existing task
 DELETE /tasks/:id       - Deletes an existing task
+```
