@@ -10,6 +10,11 @@ module.exports = (sequelize, DataTypes) => {
     // eslint-disable-next-line no-unused-vars
     static associate(models) {
       // define association here
+      Task.belongsTo(models.Users, {
+        foreignKey: 'userId',
+        as: 'user',
+        onDelete: 'CASCADE',
+      });
     }
   }
   Task.init({
@@ -39,6 +44,7 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         isInt: true,
       },
+      references: { model: 'users', key: 'id' },
     },
   }, {
     sequelize,

@@ -1,5 +1,5 @@
 const express = require('express');
-const userController = require('../controllers/userController');
+const userController = require('../controllers/user');
 const { roles } = require('../models/user');
 
 const router = express.Router();
@@ -15,7 +15,7 @@ router.put('/update/:username', userController.update);
 
 router.get('/list', userController.list);
 
-router.get('/list/:username', userController.getUsername);
+router.get('/list/:username', userController.getByUsername);
 
 router.delete('/:username', userController.delete);
 

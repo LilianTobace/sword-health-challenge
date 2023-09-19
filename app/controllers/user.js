@@ -42,10 +42,10 @@ module.exports = {
     }
   },
 
-  getUsername: async (req, res) => {
+  getByUsername: async (req, res) => {
     try {
       const { username } = req.params;
-      const user = await db.Users.verifyUsername(username);
+      const user = await db.Users.findOne({ where: { username } });
       return res.status(200).json(user);
     } catch (error) {
       return res.status(500).json({ message: error.message });

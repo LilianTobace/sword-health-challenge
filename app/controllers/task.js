@@ -10,6 +10,13 @@ const checkPermissions = (user, userId) => {
   return null;
 };
 
+const sendNotification = (task, username) => {
+  // Notification didn't block any request
+  setTimeout(() => {
+    console.log(`The tech ${username} performed the task ${task.id} on date ${task.datePerformed}`);
+  }, 15000);
+};
+
 module.exports = {
   create: async (req, res) => {
     try {
@@ -27,6 +34,10 @@ module.exports = {
         summary,
         datePerformed: new Date(datePerformed),
       });
+
+      console.log('before notification sent');
+      if (req.user.role === roles.Technician) await sendNotification(newTask, req.user.username);
+      console.log('after notification sent');
       return res.status(201).json(newTask);
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -79,7 +90,7 @@ module.exports = {
       } else {
         tasks = await db.Tasks.findAll();
       }
-      res.status(201).json(tasks);
+      res.status(200).json(tasks);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -94,7 +105,7 @@ module.exports = {
       }
 
       const deleted = await db.Tasks.destroy({ where: { id } });
-      if (deleted && deleted > 0) return res.status(201).json('User deleted successfully!');
+      if (deleted && deleted > 0) return res.status(201).json('Task deleted successfully!');
       return res.status(404).json('Task not found');
     } catch (error) {
       return res.status(500).json({ message: error.message });

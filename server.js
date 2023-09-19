@@ -22,7 +22,6 @@ module.exports.handler = async () => {
 
     app.listen(process.env.PORT);
   } catch (err) {
-    console.log(err);
     throw new Error(err);
   }
 };

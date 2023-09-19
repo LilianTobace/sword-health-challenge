@@ -27,36 +27,10 @@ module.exports.User = (sequelize, DataTypes) => {
      */
     // eslint-disable-next-line no-unused-vars
     static associate(models) {
-      // User.belongsToMany(models.Task, {
-      //   as: 'tasks',
-      //   foreignKey: 'id',
-      // });
-      // User.hasOne(models.Profile, {
-      //   foreignKey: "userId",
-      //   as: "profile",
-      // });
-      // verifyUsername(username) { return this.findOne({ where: { username } }); }
-
-      // verifyPassword(user, password) {
-      //   const verifyPassword = bcrypt.compareSync(password, user.password);
-      //   if (verifyPassword) return password;
-      //   return null;
-      // }
-
-      // validCredentials(username, password) {
-      //   const user = this.verifyUsername(username);
-      //   if (user) {
-      //     const passwordValidated = this.verifyPassword(user, password);
-      //     if (passwordValidated) return user;
-      //   }
-      //   return null;
-      // }
-
-      // generateToken(user) {
-      //   return jwt.sign({
-      //     id: user.id, role: user.role,
-      //   }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_SECRET_EXPIRES_IN });
-      // }
+      User.hasMany(models.Tasks, {
+        foreignKey: 'userId',
+        as: 'tasks',
+      });
     }
   }
 
@@ -124,18 +98,10 @@ module.exports.User = (sequelize, DataTypes) => {
     timestamps: true,
   });
 
-  User.verifyUsername = async (username) => User.findOne({ where: { username } });
-
-  User.verifyPassword = async (user, password) => {
-    const verifyPassword = bcrypt.compareSync(password, user.password);
-    if (verifyPassword) return password;
-    return null;
-  };
-
   User.validCredentials = async (username, password) => {
-    const user = await User.verifyUsername(username);
+    const user = await User.findOne({ where: { username } });
     if (user) {
-      const passwordValidated = await User.verifyPassword(user, password);
+      const passwordValidated = bcrypt.compareSync(password, user.password);
       if (passwordValidated) return user;
     }
     return null;
